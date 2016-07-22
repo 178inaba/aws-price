@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -89,15 +90,35 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 	}
 
-	for _, skus := range offer.Terms {
-		for _, terms := range skus {
-			for _, term := range terms {
-				fmt.Println(term)
+	for _, product := range offer.Products {
+		var isOregon, isLinux bool
+		for name, value := range product.Attributes {
+			if name == "location" && value == "US West (Oregon)" {
+				isOregon = true
+			} else if name == "operatingSystem" && value == "Linux" {
+				isLinux = true
 			}
-
 		}
 
+		if isOregon && isLinux {
+			if product.Attributes["instanceType"] == "m2.2xlarge" {
+				b, _ := json.Marshal(product)
+				var out bytes.Buffer
+				json.Indent(&out, b, "", "\t")
+				out.WriteTo(os.Stdout)
+			}
+			//fmt.Printf("%+v\n", product.Attributes["instanceType"])
+		}
 	}
+	/*
+		for _, skus := range offer.Terms {
+			for _, terms := range skus {
+				for _, term := range terms {
+					fmt.Println(term)
+				}
+			}
+		}
+	*/
 }
 
 func getJSON(url string) ([]byte, error) {
